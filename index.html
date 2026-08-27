@@ -80,8 +80,8 @@
           <input type="text" id="startLocation" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 서울역, 인천공항 등">
         </div>
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700">도착지 (주요 목적 도시/지역)</label>
-          <input type="text" id="destinationMain" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 제주도, 도쿄, 부산 등">
+          <label class="block text-xs font-semibold mb-1 text-slate-700">도착지 (여행 종료 후 복귀 위치 / 보통 출발지와 동일)</label>
+          <input type="text" id="destinationMain" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 서울역, 집 등 (출발지와 동일 시 동일하게 입력)">
         </div>
       </div>
 
@@ -101,34 +101,29 @@
         </div>
       </div>
 
-      <!-- 인원수 위아래 휠 드래그 선택기 -->
+      <!-- 인원수 위아래 휠 드래그 선택기 (1명~30명) -->
       <div>
-        <label class="block text-xs font-semibold mb-1 text-slate-700">여행 인원 수 (위아래로 드래그/스크롤하여 선택)</label>
+        <label class="block text-xs font-semibold mb-1 text-slate-700">여행 인원 수 (위아래로 드래그/스크롤하여 선택, 최대 30명)</label>
         <div class="relative bg-slate-100 rounded-xl border border-slate-300 overflow-hidden">
           <div class="absolute inset-x-0 top-[33.33px] h-[33.33px] bg-teal-500/20 border-y border-teal-500 pointer-events-none"></div>
           <div class="wheel-picker-container" id="wheelPicker" onscroll="onWheelScroll()">
             <div class="wheel-item"></div>
-            <!-- 1명 ~ 10명 -->
-            <div class="wheel-item font-bold text-sm" data-val="1">1 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="2">2 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="3">3 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="4">4 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="5">5 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="6">6 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="7">7 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="8">8 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="9">9 명</div>
-            <div class="wheel-item font-bold text-sm" data-val="10">10 명</div>
+            <!-- 1명 ~ 30명 생성 -->
+            <script>
+              for(let i=1; i<=30; i++) {
+                document.write(`<div class="wheel-item font-bold text-sm" data-val="${i}">${i} 명</div>`);
+              }
+            </script>
             <div class="wheel-item"></div>
           </div>
         </div>
       </div>
 
-      <!-- 세부 여행지 추가 (엔터 키 지원) -->
+      <!-- 세부 여행지 추가 (엔터 키 완벽 지원) -->
       <div>
-        <label class="block text-xs font-semibold mb-1 text-slate-700">세부 방문하고 싶은 곳 (장소 적고 Enter 누르면 추가)</label>
+        <label class="block text-xs font-semibold mb-1 text-slate-700">세부 방문하고 싶은 곳 / 지역 (장소 적고 Enter 누르면 추가)</label>
         <div class="flex gap-2">
-          <input type="text" id="destinationInput" class="flex-1 border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 해운대, 광안리 (입력 후 Enter)" onkeydown="handleDestKeyDown(event)">
+          <input type="text" id="destinationInput" class="flex-1 border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 해운대, 광안리, 도쿄타워 (입력 후 Enter)" onkeydown="handleDestKeyDown(event)">
           <button type="button" onclick="addDestination()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2.5 rounded-lg font-bold transition">추가</button>
         </div>
         <div id="destinationTags" class="flex flex-wrap gap-2 mt-2"></div>
@@ -215,7 +210,7 @@
   </main>
 
   <script>
-    // 개인 API 키 설정
+    // 개인 API 키 탑재
     const FIXED_API_KEY = "AQ.Ab8RN6K3nkgnYje2mSpkemDglSMq3jMwdZ2-dEN1HGPxS_Dtng";
 
     let map;
@@ -226,34 +221,34 @@
     let selectedTravelers = 2;
     let packingItems = ["여권/신분증", "보조배터리/충전기", "비상약", "세면도구", "편한 신발"];
 
-    // 앱 초기화 및 저장된 정보 불러오기
+    // 앱 초기화 및 로컬스토리지 불러오기
     function initApp() {
       map = L.map('map').setView([36.5, 127.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
       }).addTo(map);
 
-      // 스크롤 피커 위치 설정
+      // 휠 초기화 (기본 2명)
       setTimeout(() => {
         const picker = document.getElementById('wheelPicker');
-        picker.scrollTop = 33.33; // 기본 2명 위치
+        picker.scrollTop = 33.33; 
       }, 100);
 
       loadFromLocalStorage();
     }
     window.onload = initApp;
 
-    // 인원 선택 스크롤 휠 이벤트
+    // 위아래 휠 스크롤 이벤트 (최대 30명 연동)
     function onWheelScroll() {
       const picker = document.getElementById('wheelPicker');
       const idx = Math.round(picker.scrollTop / 33.33);
-      if (idx >= 0 && idx < 10) {
+      if (idx >= 0 && idx < 30) {
         selectedTravelers = idx + 1;
         saveToLocalStorage();
       }
     }
 
-    // 금액 텍스트(50만원, 1000000원 등) 변환 함수
+    // 예산 금액 텍스트 변환 함수
     function parseKRWBudget(text) {
       if (!text) return 0;
       let clean = text.toString().replace(/,/g, '').trim();
@@ -272,7 +267,7 @@
       return total;
     }
 
-    // 엔터 키 입력 처리
+    // 여행지 엔터 입력 처리
     function handleDestKeyDown(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -307,7 +302,7 @@
       `).join('');
     }
 
-    // 스타일 선택
+    // 스타일 태그 선택
     document.querySelectorAll('.style-tag').forEach(tag => {
       tag.addEventListener('click', function() {
         const style = this.dataset.style;
@@ -324,13 +319,13 @@
       });
     });
 
-    // AI 일정 생성 통신
+    // AI 코스 짜기 통신
     async function fetchAIItinerary() {
       const startLoc = document.getElementById('startLocation').value.trim();
       const mainDest = document.getElementById('destinationMain').value.trim();
 
       if (!startLoc || !mainDest) {
-        alert("출발지와 도착지를 입력해 주세요.");
+        alert("출발지와 복귀 목적지를 모두 입력해 주세요.");
         return;
       }
 
@@ -344,17 +339,17 @@
 
       const prompt = `
         출발지: ${startLoc}
-        도착지: ${mainDest}
-        추가 방문지: ${destinationList.join(', ')}
+        여행 종료 복귀 위치: ${mainDest}
+        방문 희망 지역들: ${destinationList.join(', ')}
         일정: ${startDate} ~ ${endDate}
-        인원: ${selectedTravelers}명
+        인원: ${selectedTravelers}명 (최대 30명 지원)
         총 예산 입력값: "${rawBudget}" (해석된 금액: ${numericBudget}원)
         선호 스타일: ${selectedStyles.join(', ')}
 
         [지침]
         1. 입력된 예산 범위 안에서 시간대별(오전, 점심, 오후, 저녁) 코스를 구체적으로 구성해줘.
-        2. 오타가 있더라도 문맥을 통해 알아서 올바른 지명이나 단어로 파악해줘.
-        3. 터무니없이 예산이 부족한 극단적 경우에만 예산 경고 메시지를 포함하고, 웬만해서는 예산에 맞춰 가성비 코스로 구성해줘.
+        2. 오타가 있더라도 문맥을 통해 알아서 올바른 지명이나 단어로 해석해줘.
+        3. 예산에 최적화된 가성비 동선으로 추천해줘.
         4. 반드시 아래 JSON 형식으로만 응답해줘.
 
         {
@@ -410,7 +405,7 @@
       }
     }
 
-    // 지도 마커 및 화면 영역 자동 조정
+    // 지도 마커 및 줌 영역 조정
     function updateMapMarkers(places) {
       markers.forEach(m => map.removeLayer(m));
       markers = [];
