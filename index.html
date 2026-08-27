@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AI 여정 - 스마트 여행 플래너</title>
   
-  <!-- 모바일 홈 화면 앱(PWA) 아이콘 & 설정 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AI 여정">
@@ -16,7 +15,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <!-- FontAwesome 아이콘 -->
+  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -31,11 +30,28 @@
       background-attachment: fixed;
     }
     .glass-card {
-      background: rgba(255, 255, 255, 0.93);
+      background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
-    #map { height: 420px; width: 100%; border-radius: 0.75rem; z-index: 10; }
+    #map { height: 400px; width: 100%; border-radius: 0.75rem; z-index: 10; }
+
+    /* 위아래 스크롤 휠 피커 스타일 */
+    .wheel-picker-container {
+      height: 100px;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .wheel-picker-container::-webkit-scrollbar { display: none; }
+    .wheel-item {
+      height: 33.33px;
+      scroll-snap-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body class="text-slate-800 min-h-screen pb-16">
@@ -46,7 +62,7 @@
       <img src="https://cdn-icons-png.flaticon.com/512/201/201623.png" class="w-10 h-10 drop-shadow-md" alt="앱 아이콘">
       <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight drop-shadow-md">AI 스마트 여정 플래너</h1>
     </div>
-    <p class="text-emerald-200 text-xs md:text-sm mt-1 drop-shadow">실시간 Gemini AI 기반 시간대별 코스 및 예산 최적화</p>
+    <p class="text-emerald-200 text-xs md:text-sm mt-1 drop-shadow">시간대별 코스 & 실시간 지능형 예산 최적화</p>
   </header>
 
   <main class="max-w-4xl mx-auto px-4 space-y-6">
@@ -54,23 +70,27 @@
     <!-- 1. 여행 정보 입력 -->
     <section class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 space-y-4">
       <h2 class="text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-2">
-        <i class="fa-solid fa-compass text-teal-600"></i>1. 출발지 및 여행 기본 정보 설정
+        <i class="fa-solid fa-compass text-teal-600"></i>1. 여행 기본 정보 입력
       </h2>
       
-      <!-- 출발지 및 예산 금액 -->
+      <!-- 출발지 & 도착지 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700">출발지 (어디서 출발하시나요?)</label>
-          <input type="text" id="startLocation" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 서울 자택, 부산역 등">
+          <label class="block text-xs font-semibold mb-1 text-slate-700">출발지 (어디서 출발하나요?)</label>
+          <input type="text" id="startLocation" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 서울역, 인천공항 등">
         </div>
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700">총 보유 예산 (원)</label>
-          <input type="number" id="totalBudget" step="10000" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 500000 (원 단위 입력)">
+          <label class="block text-xs font-semibold mb-1 text-slate-700">도착지 (주요 목적 도시/지역)</label>
+          <input type="text" id="destinationMain" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 제주도, 도쿄, 부산 등">
         </div>
       </div>
 
-      <!-- 여행 일정 -->
+      <!-- 예산 & 날짜 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-700">총 예산 (예: 50만원, 1000000원 등 입력 가능)</label>
+          <input type="text" id="totalBudgetInput" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 50만원 또는 500000">
+        </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-700">여행 일정</label>
           <div class="flex items-center gap-1 text-xs">
@@ -79,24 +99,38 @@
             <input type="date" id="endDate" class="w-full border rounded-lg p-2 focus:ring-2 focus:ring-teal-500 outline-none bg-white">
           </div>
         </div>
-        <!-- 인원 수 슬라이더 -->
-        <div>
-          <div class="flex justify-between text-xs font-semibold mb-1 text-slate-700">
-            <span>여행 인원 수</span>
-            <span class="text-teal-600 font-bold" id="travelerCountText">2 명</span>
+      </div>
+
+      <!-- 인원수 위아래 휠 드래그 선택기 -->
+      <div>
+        <label class="block text-xs font-semibold mb-1 text-slate-700">여행 인원 수 (위아래로 드래그/스크롤하여 선택)</label>
+        <div class="relative bg-slate-100 rounded-xl border border-slate-300 overflow-hidden">
+          <div class="absolute inset-x-0 top-[33.33px] h-[33.33px] bg-teal-500/20 border-y border-teal-500 pointer-events-none"></div>
+          <div class="wheel-picker-container" id="wheelPicker" onscroll="onWheelScroll()">
+            <div class="wheel-item"></div>
+            <!-- 1명 ~ 10명 -->
+            <div class="wheel-item font-bold text-sm" data-val="1">1 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="2">2 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="3">3 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="4">4 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="5">5 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="6">6 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="7">7 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="8">8 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="9">9 명</div>
+            <div class="wheel-item font-bold text-sm" data-val="10">10 명</div>
+            <div class="wheel-item"></div>
           </div>
-          <input type="range" id="travelers" min="1" max="20" value="2" class="w-full accent-teal-600 cursor-pointer mt-2" oninput="document.getElementById('travelerCountText').innerText = this.value + ' 명'">
         </div>
       </div>
 
-      <!-- 여행지 엔터 태그 추가 & 개별 삭제 -->
+      <!-- 세부 여행지 추가 (엔터 키 지원) -->
       <div>
-        <label class="block text-xs font-semibold mb-1 text-slate-700">도착 여행지 (도시/장소 적고 Enter)</label>
+        <label class="block text-xs font-semibold mb-1 text-slate-700">세부 방문하고 싶은 곳 (장소 적고 Enter 누르면 추가)</label>
         <div class="flex gap-2">
-          <input type="text" id="destinationInput" class="flex-1 border rounded-lg p-2 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 부산 (입력 후 Enter)" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); addDestination(); }">
-          <button type="button" onclick="addDestination()" class="bg-teal-600 text-white text-xs px-3 py-2 rounded-lg font-bold">추가</button>
+          <input type="text" id="destinationInput" class="flex-1 border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 해운대, 광안리 (입력 후 Enter)" onkeydown="handleDestKeyDown(event)">
+          <button type="button" onclick="addDestination()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2.5 rounded-lg font-bold transition">추가</button>
         </div>
-        <!-- 추가된 여행지 태그 영역 -->
         <div id="destinationTags" class="flex flex-wrap gap-2 mt-2"></div>
       </div>
 
@@ -104,62 +138,62 @@
       <div>
         <label class="block text-xs font-semibold mb-2 text-slate-700">선호 스타일 (다중 선택)</label>
         <div class="flex flex-wrap gap-2" id="styleTags">
-          <button type="button" data-style="식도락" class="style-tag px-3 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🍜 식도락</button>
-          <button type="button" data-style="경치/자연" class="style-tag px-3 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🏔️ 경치 & 자연</button>
-          <button type="button" data-style="로컬체험" class="style-tag px-3 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🏘️ 로컬 탐방</button>
-          <button type="button" data-style="운동/액티비티" class="style-tag px-3 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🏃 운동 & 액티비티</button>
-          <button type="button" data-style="여유/휴식" class="style-tag px-3 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">☕ 힐링 & 여유</button>
+          <button type="button" data-style="식도락" class="style-tag px-3.5 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🍜 식도락</button>
+          <button type="button" data-style="경치/자연" class="style-tag px-3.5 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🏔️ 경치 & 자연</button>
+          <button type="button" data-style="로컬체험" class="style-tag px-3.5 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🏘️ 로컬 탐방</button>
+          <button type="button" data-style="운동/액티비티" class="style-tag px-3.5 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">🏃 운동 & 액티비티</button>
+          <button type="button" data-style="여유/휴식" class="style-tag px-3.5 py-1.5 rounded-full border text-xs font-medium bg-white text-slate-700 border-slate-300">☕ 힐링 & 여유</button>
         </div>
       </div>
 
-      <button id="generateBtn" onclick="fetchAIItinerary()" class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
-        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 시간대별 맞춤 코스 짜기
+      <button id="generateBtn" onclick="fetchAIItinerary()" class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> AI 코스 짜기
       </button>
     </section>
 
     <!-- 로딩 스피너 -->
     <div id="loading" class="hidden glass-card p-8 rounded-2xl text-center">
       <i class="fa-solid fa-spinner fa-spin text-4xl text-teal-600 mb-3"></i>
-      <p class="text-sm font-bold text-slate-800">예산 안에서 최적의 시간대별 코스를 구성 중입니다...</p>
+      <p class="text-sm font-bold text-slate-800">Gemini AI가 시간대별 동선과 예산을 분석해 최적의 코스를 만드는 중입니다...</p>
     </div>
 
-    <!-- 예산 안내 박스 -->
-    <div id="budgetWarningBox" class="hidden glass-card p-5 rounded-2xl border-2 border-rose-400 bg-rose-50/95 text-xs text-rose-900 space-y-2"></div>
+    <!-- 예산 경고 박스 -->
+    <div id="budgetWarningBox" class="hidden glass-card p-5 rounded-2xl border-2 border-amber-400 bg-amber-50/95 text-xs text-amber-900 space-y-2"></div>
 
     <!-- 지도 섹션 -->
     <section class="glass-card p-6 rounded-2xl shadow-xl border border-white/40">
-      <h2 class="text-lg font-bold mb-3 text-slate-900 border-b pb-2"><i class="fa-solid fa-map-location-dot mr-2 text-teal-600"></i>2. 실시간 동선 지도 (넓은 범위 보기)</h2>
+      <h2 class="text-lg font-bold mb-3 text-slate-900 border-b pb-2 flex items-center gap-2">
+        <i class="fa-solid fa-map-location-dot text-teal-600"></i>2. 동선 지도
+      </h2>
       <div id="map"></div>
     </section>
 
-    <!-- AI 추천 장소 및 제어 버튼 -->
+    <!-- AI 추천 장소 리스트 -->
     <section id="recommendationSection" class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 hidden">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-2 border-b gap-3">
         <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-list-check mr-2 text-teal-600"></i>3. AI 추천 장소 리스트</h2>
         
         <div class="flex flex-wrap gap-2">
-          <button onclick="toggleSelectAll()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded border shadow-sm">전체 선택</button>
+          <button onclick="toggleSelectAll()" class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded border shadow-sm">전체 선택/해제</button>
           <button onclick="deleteChecked()" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded border border-rose-200">선택 삭제</button>
-          <button onclick="regenerateChecked()" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded border border-amber-200">다시 찾기</button>
-          <button onclick="confirmPlaces()" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded shadow">시간대별 일정 확정</button>
+          <button onclick="confirmPlaces()" class="px-3 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded shadow">시간대별 일정표 생성</button>
         </div>
       </div>
 
       <div id="placeListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- 날짜별 최종 일정표 & 예산 내역 -->
+    <!-- 날짜별 확정 일정표 -->
     <section id="finalScheduleSection" class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 hidden">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-3 gap-3">
         <div>
-          <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-calendar-days mr-2 text-teal-600"></i>4. 시간대별 상세 확정 일정표</h2>
+          <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-calendar-days mr-2 text-teal-600"></i>4. 시간대별 최종 일정표</h2>
           <div id="totalBudgetSummary" class="mt-1 text-xs text-teal-800 font-bold bg-teal-50 px-2.5 py-1 rounded inline-block border border-teal-200"></div>
         </div>
 
         <div class="flex flex-wrap gap-2">
-          <button onclick="shareKakao()" class="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-slate-900 text-xs font-bold rounded shadow-sm">링크 공유</button>
-          <button onclick="shareEmail()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold rounded shadow-sm">메일 전송</button>
-          <button onclick="downloadAsImage()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm">이미지 저장</button>
+          <button onclick="shareKakao()" class="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-slate-900 text-xs font-bold rounded shadow-sm flex items-center gap-1"><i class="fa-solid fa-comment"></i> 카톡/링크 공유</button>
+          <button onclick="downloadAsImage()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow-sm flex items-center gap-1"><i class="fa-solid fa-download"></i> 이미지 저장</button>
         </div>
       </div>
 
@@ -168,20 +202,11 @@
       </div>
     </section>
 
-    <!-- 특이사항/차박 요청 -->
-    <section id="customRequestSection" class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 hidden">
-      <h2 class="text-md font-bold mb-1 text-slate-900"><i class="fa-regular fa-comment-dots mr-2 text-teal-600"></i>5. 추가 요청사항 반영 (선택)</h2>
-      <textarea id="customRequestText" rows="2" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none mb-2 bg-white" placeholder="예: 2일차 밤에는 차박을 하고 싶어요 등"></textarea>
-      <button onclick="fetchAIItinerary()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded text-xs transition">
-        요청 반영해서 재검색
-      </button>
-    </section>
-
     <!-- 준비물 체크리스트 -->
     <section id="packingListSection" class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 hidden">
-      <h2 class="text-md font-bold mb-3 text-slate-900 border-b pb-2"><i class="fa-solid fa-boxes-packing mr-2 text-teal-600"></i>6. 여행 필수 준비물 체크리스트</h2>
+      <h2 class="text-md font-bold mb-3 text-slate-900 border-b pb-2"><i class="fa-solid fa-boxes-packing mr-2 text-teal-600"></i>5. 여행 필수 준비물 체크리스트</h2>
       <div class="flex gap-2 mb-4">
-        <input type="text" id="newPackingItem" class="flex-1 border rounded p-2 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="추가 준비물 입력">
+        <input type="text" id="newPackingItem" class="flex-1 border rounded p-2 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="추가할 준비물 입력">
         <button onclick="addCustomPackingItem()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded">추가</button>
       </div>
       <div id="packingListContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs"></div>
@@ -190,7 +215,7 @@
   </main>
 
   <script>
-    // 하드코딩된 API Key (개인정보 보호)
+    // 개인 API 키 설정
     const FIXED_API_KEY = "AQ.Ab8RN6K3nkgnYje2mSpkemDglSMq3jMwdZ2-dEN1HGPxS_Dtng";
 
     let map;
@@ -198,81 +223,63 @@
     let selectedStyles = [];
     let destinationList = [];
     let generatedPlaces = [];
-    let packingItems = ["여권/신분증", "보조배터리/충전기", "환전 카드/현금", "비상약", "세면도구", "우산/우비", "운동화/편한 신발"];
-    let allSelectedState = false;
+    let selectedTravelers = 2;
+    let packingItems = ["여권/신분증", "보조배터리/충전기", "비상약", "세면도구", "편한 신발"];
 
-    // OpenStreetMap 초기화 및 로컬스토리지 복원
+    // 앱 초기화 및 저장된 정보 불러오기
     function initApp() {
-      map = L.map('map').setView([37.5665, 126.9780], 9);
+      map = L.map('map').setView([36.5, 127.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap'
       }).addTo(map);
+
+      // 스크롤 피커 위치 설정
+      setTimeout(() => {
+        const picker = document.getElementById('wheelPicker');
+        picker.scrollTop = 33.33; // 기본 2명 위치
+      }, 100);
 
       loadFromLocalStorage();
     }
     window.onload = initApp;
 
-    // 로컬스토리지 저장 및 불러오기 (개인 앱 기록 유지)
-    function saveToLocalStorage() {
-      const data = {
-        startLocation: document.getElementById('startLocation').value,
-        totalBudget: document.getElementById('totalBudget').value,
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        travelers: document.getElementById('travelers').value,
-        destinationList,
-        selectedStyles,
-        generatedPlaces,
-        packingItems,
-        customReq: document.getElementById('customRequestText').value
-      };
-      localStorage.setItem('ai_travel_planner_data', JSON.stringify(data));
-    }
-
-    function loadFromLocalStorage() {
-      const saved = localStorage.getItem('ai_travel_planner_data');
-      if(!saved) return;
-      try {
-        const data = JSON.parse(saved);
-        if(data.startLocation) document.getElementById('startLocation').value = data.startLocation;
-        if(data.totalBudget) document.getElementById('totalBudget').value = data.totalBudget;
-        if(data.startDate) document.getElementById('startDate').value = data.startDate;
-        if(data.endDate) document.getElementById('endDate').value = data.endDate;
-        if(data.travelers) {
-          document.getElementById('travelers').value = data.travelers;
-          document.getElementById('travelerCountText').innerText = data.travelers + ' 명';
-        }
-        if(data.destinationList) {
-          destinationList = data.destinationList;
-          renderDestinationTags();
-        }
-        if(data.selectedStyles) {
-          selectedStyles = data.selectedStyles;
-          document.querySelectorAll('.style-tag').forEach(tag => {
-            if(selectedStyles.includes(tag.dataset.style)) {
-              tag.classList.remove('bg-white', 'text-slate-700');
-              tag.classList.add('bg-teal-600', 'text-white');
-            }
-          });
-        }
-        if(data.generatedPlaces && data.generatedPlaces.length > 0) {
-          generatedPlaces = data.generatedPlaces;
-          document.getElementById('recommendationSection').classList.remove('hidden');
-          document.getElementById('customRequestSection').classList.remove('hidden');
-          renderPlaceList();
-          updateMapMarkers(generatedPlaces);
-        }
-        if(data.packingItems) {
-          packingItems = data.packingItems;
-          renderPackingList();
-        }
-        if(data.customReq) document.getElementById('customRequestText').value = data.customReq;
-      } catch(e) {
-        console.error(e);
+    // 인원 선택 스크롤 휠 이벤트
+    function onWheelScroll() {
+      const picker = document.getElementById('wheelPicker');
+      const idx = Math.round(picker.scrollTop / 33.33);
+      if (idx >= 0 && idx < 10) {
+        selectedTravelers = idx + 1;
+        saveToLocalStorage();
       }
     }
 
-    // 여행지 엔터 태그 추가 및 삭제
+    // 금액 텍스트(50만원, 1000000원 등) 변환 함수
+    function parseKRWBudget(text) {
+      if (!text) return 0;
+      let clean = text.toString().replace(/,/g, '').trim();
+      
+      let total = 0;
+      const ukMatch = clean.match(/(\d+)\s*억/);
+      const manMatch = clean.match(/(\d+)\s*만/);
+
+      if (ukMatch) total += parseInt(ukMatch[1]) * 100000000;
+      if (manMatch) total += parseInt(manMatch[1]) * 10000;
+
+      if (!ukMatch && !manMatch) {
+        const nums = clean.replace(/[^0-9]/g, '');
+        if (nums) total = parseInt(nums);
+      }
+      return total;
+    }
+
+    // 엔터 키 입력 처리
+    function handleDestKeyDown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addDestination();
+      }
+    }
+
     function addDestination() {
       const input = document.getElementById('destinationInput');
       const val = input.value.trim();
@@ -300,7 +307,7 @@
       `).join('');
     }
 
-    // 스타일 태그 선택
+    // 스타일 선택
     document.querySelectorAll('.style-tag').forEach(tag => {
       tag.addEventListener('click', function() {
         const style = this.dataset.style;
@@ -317,48 +324,42 @@
       });
     });
 
-    // 실시간 Gemini AI 통신 (gemini-3.6-flash 및 시간대별 계획 요청)
+    // AI 일정 생성 통신
     async function fetchAIItinerary() {
       const startLoc = document.getElementById('startLocation').value.trim();
-      if(!startLoc) {
-        alert("출발지를 입력해 주세요.");
+      const mainDest = document.getElementById('destinationMain').value.trim();
+
+      if (!startLoc || !mainDest) {
+        alert("출발지와 도착지를 입력해 주세요.");
         return;
       }
 
-      if(destinationList.length === 0) {
-        alert("최소 하나 이상의 도착 여행지를 입력 후 Enter를 눌러 추가해 주세요.");
-        return;
-      }
-
+      const rawBudget = document.getElementById('totalBudgetInput').value;
+      const numericBudget = parseKRWBudget(rawBudget);
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
-      const totalBudget = parseInt(document.getElementById('totalBudget').value) || 0;
-      const travelers = document.getElementById('travelers').value;
-      const customReq = document.getElementById('customRequestText').value;
 
       document.getElementById('loading').classList.remove('hidden');
       document.getElementById('budgetWarningBox').classList.add('hidden');
 
       const prompt = `
         출발지: ${startLoc}
-        도착 여행지 목록: ${destinationList.join(', ')}
+        도착지: ${mainDest}
+        추가 방문지: ${destinationList.join(', ')}
         일정: ${startDate} ~ ${endDate}
-        인원: ${travelers}명
-        사용자 총 예산: ${totalBudget}원
+        인원: ${selectedTravelers}명
+        총 예산 입력값: "${rawBudget}" (해석된 금액: ${numericBudget}원)
         선호 스타일: ${selectedStyles.join(', ')}
-        추가 요청: ${customReq}
 
         [지침]
-        1. 예산은 웬만하면 사용자 총 예산(${totalBudget}원) 범위 내에서 맞출 수 있도록 현실적인 코스를 짜주세요. 터무니없이 부족하여 아예 불가능한 경우에만 "isPossible": false로 하고 대안을 제시해주세요.
-        2. 각 장소마다 반드시 구체적인 시간대(예: "09:00 - 11:00", "12:30 - 14:00" 등)를 지정해주세요.
-        3. 실제 존재하는 팩트 기반 장소로만 JSON 데이터를 생성하고 모든 비용은 대한민국 원(KRW) 기준입니다.
-        4. 어떠한 마크다운/설명 없이 오직 아래 순수 JSON 포맷으로만 응답하세요.
+        1. 입력된 예산 범위 안에서 시간대별(오전, 점심, 오후, 저녁) 코스를 구체적으로 구성해줘.
+        2. 오타가 있더라도 문맥을 통해 알아서 올바른 지명이나 단어로 파악해줘.
+        3. 터무니없이 예산이 부족한 극단적 경우에만 예산 경고 메시지를 포함하고, 웬만해서는 예산에 맞춰 가성비 코스로 구성해줘.
+        4. 반드시 아래 JSON 형식으로만 응답해줘.
 
         {
           "isPossible": true,
           "message": "",
-          "minRequiredBudget": 0,
-          "recommendedAlternatives": [],
           "places": [
             {
               "id": 1,
@@ -366,16 +367,11 @@
               "timeSlot": "09:00 - 11:00",
               "type": "attraction 또는 restaurant 또는 accommodation",
               "category": "명소 또는 식당 또는 숙소",
-              "name": "실제 장소명",
-              "lat": 위도(숫자),
-              "lng": 경도(숫자),
-              "menu": "대표메뉴",
-              "atmosphere": "분위기/웨이팅",
-              "mustDo": "필수 활동",
-              "pros": "숙소 장점",
-              "cons": "숙소 단점",
-              "reason": "선택 이유",
-              "cost": 1인당예상비용(원 단위 숫자만)
+              "name": "실제 존재하는 장소명",
+              "lat": 위도숫자,
+              "lng": 경도숫자,
+              "details": "주요 활동 또는 대표 메뉴",
+              "cost": 1인당예상비용숫자
             }
           ]
         }
@@ -392,4 +388,240 @@
         if(data.error) throw new Error(data.error.message);
 
         let rawText = data.candidates[0].content.parts[0].text;
-        rawText = rawText.replace(/```json/g, '').replace(/
+        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        const result = JSON.parse(rawText);
+        document.getElementById('loading').classList.add('hidden');
+
+        generatedPlaces = result.places || [];
+        generatedPlaces.forEach(p => p.checked = true);
+
+        document.getElementById('recommendationSection').classList.remove('hidden');
+        renderPlaceList();
+        updateMapMarkers(generatedPlaces);
+        saveToLocalStorage();
+
+        setTimeout(() => { map.invalidateSize(); }, 200);
+
+      } catch (err) {
+        console.error(err);
+        alert("코스 생성 실패: " + err.message);
+        document.getElementById('loading').classList.add('hidden');
+      }
+    }
+
+    // 지도 마커 및 화면 영역 자동 조정
+    function updateMapMarkers(places) {
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+      const bounds = [];
+
+      places.forEach(place => {
+        if(place.lat && place.lng) {
+          const marker = L.marker([place.lat, place.lng]).addTo(map)
+            .bindPopup(`<b>${place.name}</b><br>${place.timeSlot || ''}`);
+          markers.push(marker);
+          bounds.push([place.lat, place.lng]);
+        }
+      });
+
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }
+
+    function renderPlaceList() {
+      const container = document.getElementById('placeListContainer');
+      container.innerHTML = '';
+
+      generatedPlaces.forEach((place) => {
+        const card = document.createElement('div');
+        card.className = "p-3.5 rounded-xl border border-slate-200 bg-white shadow-sm flex items-start gap-3 text-xs";
+
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`;
+
+        card.innerHTML = `
+          <input type="checkbox" class="mt-1 w-4 h-4 cursor-pointer" ${place.checked ? 'checked' : ''} onchange="toggleCheck(${place.id})">
+          <div class="flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800">${place.timeSlot || '시간'}</span>
+                <strong class="text-sm text-slate-800">${place.name}</strong>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-slate-500">₩${(place.cost||0).toLocaleString()}원</span>
+                <a href="${mapUrl}" target="_blank" class="text-teal-600 hover:underline font-bold whitespace-nowrap"><i class="fa-solid fa-map-pin"></i> 지도</a>
+              </div>
+            </div>
+            <p class="text-slate-600 mt-1">${place.details || ''}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleCheck(id) {
+      const item = generatedPlaces.find(p => p.id === id);
+      if(item) item.checked = !item.checked;
+      saveToLocalStorage();
+    }
+
+    function toggleSelectAll() {
+      const allChecked = generatedPlaces.every(p => p.checked);
+      generatedPlaces.forEach(p => p.checked = !allChecked);
+      renderPlaceList();
+      saveToLocalStorage();
+    }
+
+    function deleteChecked() {
+      generatedPlaces = generatedPlaces.filter(p => !p.checked);
+      renderPlaceList();
+      updateMapMarkers(generatedPlaces);
+      saveToLocalStorage();
+    }
+
+    function confirmPlaces() {
+      const finalSection = document.getElementById('finalScheduleSection');
+      const container = document.getElementById('dayByDaySchedule');
+      const packingSection = document.getElementById('packingListSection');
+
+      finalSection.classList.remove('hidden');
+      packingSection.classList.remove('hidden');
+      container.innerHTML = '';
+
+      let totalExpense = 0;
+      const grouped = {};
+
+      generatedPlaces.filter(p => p.checked).forEach(p => {
+        const day = p.day || 1;
+        if(!grouped[day]) grouped[day] = [];
+        grouped[day].push(p);
+      });
+
+      Object.keys(grouped).forEach(day => {
+        const dayBox = document.createElement('div');
+        dayBox.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2";
+
+        let dayCost = 0;
+        let itemsHTML = grouped[day].map(item => {
+          dayCost += (item.cost || 0);
+          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`;
+
+          return `
+            <div class="py-2 border-b last:border-b-0 flex justify-between items-center text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">${item.timeSlot || '시간'}</span>
+                <strong class="text-slate-800">${item.name}</strong>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-slate-500">₩${(item.cost||0).toLocaleString()}원</span>
+                <a href="${mapUrl}" target="_blank" class="text-teal-600 hover:underline font-semibold whitespace-nowrap">지도보기</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        totalExpense += dayCost;
+
+        dayBox.innerHTML = `
+          <div class="flex justify-between items-center pb-2 border-b">
+            <h3 class="font-bold text-teal-800 text-sm"><i class="fa-regular fa-calendar-check mr-1"></i> DAY ${day}</h3>
+            <span class="text-xs font-bold text-slate-600">예상 1인 비용: ₩${dayCost.toLocaleString()}원</span>
+          </div>
+          <div>${itemsHTML}</div>
+        `;
+        container.appendChild(dayBox);
+      });
+
+      const grandTotal = totalExpense * selectedTravelers;
+      document.getElementById('totalBudgetSummary').innerHTML = `전체 인원(${selectedTravelers}명) 총 예상 비용: 약 ₩${grandTotal.toLocaleString()}원`;
+
+      renderPackingList();
+      window.scrollTo({ top: finalSection.offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function shareKakao() {
+      navigator.clipboard.writeText(window.location.href);
+      alert("일정 링크가 복사되었습니다! 원하시는 곳에 붙여넣기 하여 공유하세요.");
+    }
+
+    function downloadAsImage() {
+      html2canvas(document.getElementById('downloadArea')).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'ai-travel-plan.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    function renderPackingList() {
+      const container = document.getElementById('packingListContainer');
+      container.innerHTML = '';
+      packingItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-2 p-2 rounded border bg-white shadow-sm";
+        div.innerHTML = `<input type="checkbox" class="w-4 h-4 cursor-pointer"><span class="text-slate-700">${item}</span>`;
+        container.appendChild(div);
+      });
+    }
+
+    function addCustomPackingItem() {
+      const input = document.getElementById('newPackingItem');
+      const val = input.value.trim();
+      if(val && !packingItems.includes(val)) {
+        packingItems.push(val);
+        renderPackingList();
+        input.value = '';
+        saveToLocalStorage();
+      }
+    }
+
+    // 로컬스토리지 저장 및 불러오기
+    function saveToLocalStorage() {
+      const data = {
+        startLocation: document.getElementById('startLocation').value,
+        destinationMain: document.getElementById('destinationMain').value,
+        totalBudgetInput: document.getElementById('totalBudgetInput').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        selectedTravelers,
+        destinationList,
+        selectedStyles,
+        generatedPlaces,
+        packingItems
+      };
+      localStorage.setItem('ai_travel_data_saved', JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('ai_travel_data_saved');
+      if(!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        if(data.startLocation) document.getElementById('startLocation').value = data.startLocation;
+        if(data.destinationMain) document.getElementById('destinationMain').value = data.destinationMain;
+        if(data.totalBudgetInput) document.getElementById('totalBudgetInput').value = data.totalBudgetInput;
+        if(data.startDate) document.getElementById('startDate').value = data.startDate;
+        if(data.endDate) document.getElementById('endDate').value = data.endDate;
+        if(data.destinationList) { destinationList = data.destinationList; renderDestinationTags(); }
+        if(data.selectedStyles) {
+          selectedStyles = data.selectedStyles;
+          document.querySelectorAll('.style-tag').forEach(tag => {
+            if(selectedStyles.includes(tag.dataset.style)) {
+              tag.classList.remove('bg-white', 'text-slate-700');
+              tag.classList.add('bg-teal-600', 'text-white');
+            }
+          });
+        }
+        if(data.generatedPlaces && data.generatedPlaces.length > 0) {
+          generatedPlaces = data.generatedPlaces;
+          document.getElementById('recommendationSection').classList.remove('hidden');
+          renderPlaceList();
+          updateMapMarkers(generatedPlaces);
+        }
+        if(data.packingItems) { packingItems = data.packingItems; renderPackingList(); }
+      } catch(e) { console.error(e); }
+    }
+  </script>
+</body>
+</html>
