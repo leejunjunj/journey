@@ -24,10 +24,9 @@
       margin: 0;
       padding: 0;
     }
-    /* 감성적인 고화질 여행 배경 이미지 적용 */
     body {
       background: linear-gradient(rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.65)), 
-                  url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000&auto=format&fit=crop') no-break center center / cover fixed;
+                  url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000&auto=format&fit=crop') no-repeat center center / cover fixed;
     }
     .glass-card {
       background: rgba(255, 255, 255, 0.96);
@@ -52,7 +51,6 @@
       justify-content: center;
     }
 
-    /* 글자 세로 쏠림 및 이상한 줄바꿈 방지 스타일 */
     .no-break {
       white-space: nowrap !important;
       word-break: keep-all !important;
@@ -140,12 +138,12 @@
         </div>
       </div>
 
-      <!-- 특이사항 / 기타 요청 (복원된 부분: 차박, 숙소 스타일 등 자유 작성) -->
+      <!-- 특이사항 / 기타 요청 -->
       <div>
         <label class="block text-xs font-semibold mb-1 text-slate-700 flex items-center gap-1">
-          <i class="fa-solid fa-pen-to-square text-teal-600"></i> 특이사항 / 기타 요청 사항 (차박, 숙소 희망 등)
+          <i class="fa-solid fa-pen-to-square text-teal-600"></i> 특이사항 / 기타 요청 사항 (차박, 희망 숙소 등)
         </label>
-        <textarea id="etcNotesInput" rows="2.5" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white text-slate-800" placeholder="예: 첫날 밤은 차박 희망 / 둘째 날은 오션뷰 펜션 / 렌트카 이동 / 회 못 먹음 등 자유롭게 적어주세요."></textarea>
+        <textarea id="etcNotesInput" rows="2.5" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white text-slate-800" placeholder="예: 첫날 밤은 차박 희망 / 둘째 날은 오션뷰 펜션 / 렌트카 이동 등 자유롭게 입력하세요."></textarea>
       </div>
 
       <button id="generateBtn" onclick="fetchAIItinerary()" class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold py-3.5 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2 no-break">
@@ -156,7 +154,7 @@
     <!-- 로딩 스피너 -->
     <div id="loading" class="hidden glass-card p-6 rounded-2xl text-center space-y-2">
       <i class="fa-solid fa-spinner fa-spin text-3xl text-teal-600"></i>
-      <p class="text-xs font-bold text-slate-800 text-keep">AI가 차박/숙소, 이동시간 및 일자별 예산을 반영해 코스를 만드는 중입니다...</p>
+      <p class="text-xs font-bold text-slate-800 text-keep">AI가 동선, 장소별 카테고리, 숙소 장단점 및 예산을 분석하는 중입니다...</p>
     </div>
 
     <!-- 2. 동선 지도 -->
@@ -167,13 +165,14 @@
       <div id="map"></div>
     </section>
 
-    <!-- 3. AI 추천 장소 및 이동 경로 -->
+    <!-- 3. AI 추천 장소 및 이동 경로 (재추천 버튼 추가) -->
     <section id="recommendationSection" class="glass-card p-4 rounded-2xl shadow-xl border border-white/40 hidden space-y-3">
       <div class="flex flex-col gap-2 pb-2 border-b">
         <h2 class="text-base font-bold text-slate-900 no-break"><i class="fa-solid fa-list-check mr-1.5 text-teal-600"></i>3. AI 추천 장소 및 이동 경로</h2>
         <div class="flex flex-wrap gap-1.5">
           <button onclick="toggleSelectAll()" class="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded border shadow-sm no-break">전체선택/해제</button>
           <button onclick="deleteChecked()" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded border border-rose-200 no-break">선택 삭제</button>
+          <button onclick="fetchAIItinerary()" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded shadow no-break"><i class="fa-solid fa-rotate mr-1"></i>다른 코스 재추천</button>
           <button onclick="confirmPlaces()" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded shadow no-break">최종 일정표 생성</button>
         </div>
       </div>
@@ -181,10 +180,18 @@
       <div id="placeListContainer" class="space-y-3"></div>
     </section>
 
-    <!-- 4. 시간대별 최종 일정표 -->
+    <!-- 4. 선택된 AI 숙소의 실질 장단점 카드 -->
+    <section id="selectedAccommodationsSection" class="glass-card p-4 rounded-2xl shadow-xl border border-white/40 hidden space-y-3">
+      <h2 class="text-base font-bold text-slate-900 border-b pb-2 flex items-center gap-2 no-break">
+        <i class="fa-solid fa-bed text-teal-600"></i>AI 추천 숙소 솔직 장단점 분석
+      </h2>
+      <div id="accommodationCardsContainer" class="space-y-2 text-xs"></div>
+    </section>
+
+    <!-- 5. 시간대별 최종 일정표 -->
     <section id="finalScheduleSection" class="glass-card p-4 rounded-2xl shadow-xl border border-white/40 hidden space-y-3">
       <div class="space-y-2 border-b pb-3">
-        <h2 class="text-base font-bold text-slate-900 no-break"><i class="fa-solid fa-calendar-days mr-1.5 text-teal-600"></i>4. 시간대별 최종 일정표 & 예산 분석</h2>
+        <h2 class="text-base font-bold text-slate-900 no-break"><i class="fa-solid fa-calendar-days mr-1.5 text-teal-600"></i>5. 시간대별 최종 일정표 & 예산 분석</h2>
         <div id="totalBudgetSummary" class="text-xs text-teal-900 font-bold bg-teal-100/90 p-2.5 rounded-lg border border-teal-200 text-keep space-y-1"></div>
 
         <div class="flex gap-2 pt-1">
@@ -198,53 +205,7 @@
       </div>
     </section>
 
-    <!-- 5. 숙소 유형별 장단점 가이드 -->
-    <section id="accommodationGuideSection" class="glass-card p-4 rounded-2xl shadow-xl border border-white/40 space-y-3">
-      <h2 class="text-base font-bold text-slate-900 border-b pb-2 flex items-center gap-2 no-break">
-        <i class="fa-solid fa-bed text-teal-600"></i>숙소/숙박 유형별 장단점 추천 가이드
-      </h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-        
-        <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-xl space-y-1">
-          <div class="font-bold text-amber-900 text-xs flex items-center justify-between no-break">
-            <span>🚗 차박 / 노지 캠핑</span>
-            <span class="text-[10px] bg-amber-200 px-1.5 py-0.5 rounded text-amber-800">가성비/낭만</span>
-          </div>
-          <p class="text-slate-700 text-[11px] leading-tight text-keep"><b>[장점]</b> 숙박비 절감, 바다/자연 바로 앞 독점 뷰, 자유로운 이동.</p>
-          <p class="text-slate-600 text-[11px] leading-tight text-keep"><b>[단점]</b> 화장실/샤워실 불편, 계절별 난방·냉방 준비 필요.</p>
-        </div>
-
-        <div class="p-3 bg-teal-50/80 border border-teal-200 rounded-xl space-y-1">
-          <div class="font-bold text-teal-900 text-xs flex items-center justify-between no-break">
-            <span>🏡 오션뷰 / 독채 펜션</span>
-            <span class="text-[10px] bg-teal-200 px-1.5 py-0.5 rounded text-teal-800">감성/힐링</span>
-          </div>
-          <p class="text-slate-700 text-[11px] leading-tight text-keep"><b>[장점]</b> 프라이빗한 바베큐/스파/수영장, 감성 인테리어.</p>
-          <p class="text-slate-600 text-[11px] leading-tight text-keep"><b>[단점]</b> 주말/성수기 가격 상승, 요리 및 입퇴실 셀프 정리.</p>
-        </div>
-
-        <div class="p-3 bg-blue-50/80 border border-blue-200 rounded-xl space-y-1">
-          <div class="font-bold text-blue-900 text-xs flex items-center justify-between no-break">
-            <span>🏢 리조트 / 호텔</span>
-            <span class="text-[10px] bg-blue-200 px-1.5 py-0.5 rounded text-blue-800">편의성/가족</span>
-          </div>
-          <p class="text-slate-700 text-[11px] leading-tight text-keep"><b>[장점]</b> 최고 수준 청결도, 워터파크/조식/부대시설 완비.</p>
-          <p class="text-slate-600 text-[11px] leading-tight text-keep"><b>[단점]</b> 펜션 대비 객실 취사 제한, 비교적 높은 기본 비용.</p>
-        </div>
-
-        <div class="p-3 bg-slate-100/90 border border-slate-300 rounded-xl space-y-1">
-          <div class="font-bold text-slate-800 text-xs flex items-center justify-between no-break">
-            <span>🏨 시내 모텔 / 게스트하우스</span>
-            <span class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">실속/접근성</span>
-          </div>
-          <p class="text-slate-700 text-[11px] leading-tight text-keep"><b>[장점]</b> 터미널/중심가 근접성, 저렴한 비용, 잠만 자기에 최적.</p>
-          <p class="text-slate-600 text-[11px] leading-tight text-keep"><b>[단점]</b> 관광지 특유의 경치나 바베큐 감성은 부족함.</p>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- 6. 상세 필수품 체크리스트 -->
+    <!-- 6. 상세 필수품 체크리스트 (1줄 정렬 적용) -->
     <section id="packingListSection" class="glass-card p-4 rounded-2xl shadow-xl border border-white/40 space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
         <h2 class="text-base font-bold text-slate-900 no-break"><i class="fa-solid fa-boxes-packing mr-1.5 text-teal-600"></i>6. 여행 필수품 체크리스트</h2>
@@ -256,7 +217,8 @@
         <button onclick="addCustomPackingItem()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-3 py-2 rounded no-break">추가</button>
       </div>
 
-      <div id="packingListContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1"></div>
+      <!-- 1줄 세로 정렬: grid-cols-1 -->
+      <div id="packingListContainer" class="grid grid-cols-1 gap-2 text-xs pt-1"></div>
     </section>
 
   </main>
@@ -381,7 +343,7 @@
       });
     });
 
-    // 장소 카테고리에 맞는 한글 배지 태그 생성 함수 (글자 쏠림 방지 스타일 포함)
+    // 장소 카테고리에 맞는 한글 배지 태그 생성 함수
     function getCategoryTag(category, type) {
       if (type === 'transport') {
         return `<span class="shrink-0 whitespace-nowrap bg-amber-100 text-amber-800 border border-amber-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🚗 이동/교통</span>`;
@@ -389,13 +351,13 @@
       
       const cat = (category || '').toLowerCase();
       if (cat.includes('숙소') || cat.includes('숙박') || cat.includes('차박') || cat.includes('펜션') || cat.includes('호텔')) {
-        return `<span class="shrink-0 whitespace-nowrap bg-purple-100 text-purple-800 border border-purple-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🏨 숙소/숙박</span>`;
+        return `<span class="shrink-0 whitespace-nowrap bg-purple-100 text-purple-800 border border-purple-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🏨 숙소</span>`;
       } else if (cat.includes('식당') || cat.includes('맛집') || cat.includes('음식')) {
-        return `<span class="shrink-0 whitespace-nowrap bg-rose-100 text-rose-800 border border-rose-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🍽️ 식당/맛집</span>`;
+        return `<span class="shrink-0 whitespace-nowrap bg-rose-100 text-rose-800 border border-rose-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🍽️ 식당</span>`;
       } else if (cat.includes('카페') || cat.includes('디저트')) {
         return `<span class="shrink-0 whitespace-nowrap bg-orange-100 text-orange-800 border border-orange-300 text-[11px] px-1.5 py-0.5 rounded font-bold">☕ 카페</span>`;
       } else {
-        return `<span class="shrink-0 whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🏔️ 명소/관광</span>`;
+        return `<span class="shrink-0 whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-300 text-[11px] px-1.5 py-0.5 rounded font-bold">🏔️ 명소</span>`;
       }
     }
 
@@ -428,8 +390,8 @@
 
         [작성 지침]
         1. DAY별 / 시간대별(예: 09:00 - 11:00) 코스로 작성해줘.
-        2. 특이사항(차박 희망, 특정 숙소 등)이 있다면 반드시 코스 및 숙소 배치에 최우선적으로 반영해줘.
-        3. category 필드는 반드시 "숙소", "식당", "카페", "명소", "교통" 중 하나로 구체적으로 지정해줘.
+        2. category 필드는 반드시 "숙소", "식당", "카페", "명소", "교통" 중 하나로 정확히 구분해줘.
+        3. 추천된 숙소(차박지 포함) 항목의 경우, details 필드에 해당 추천 숙소의 [선택 이유 및 실제 장점]과 [이용 시 주의할 단점/팁]을 구체적으로 적어줘.
         4. type 필드는 "place" (방문지/식당/숙소) 또는 "transport" (교통/이동)으로 구분해줘.
         5. 반드시 아래 JSON 형식으로만 응답해줘.
 
@@ -446,20 +408,10 @@
               "name": "장소명",
               "lat": 위도숫자(교통은0),
               "lng": 경도숫자(교통은0),
-              "details": "주요 활동 및 상세 정보",
+              "details": "주요 활동 및 추천 이유",
+              "pros": "장점 내용 (숙소일때 필수)",
+              "cons": "단점 및 주의사항 (숙소일때 필수)",
               "cost": 1인당비용숫자
-            },
-            {
-              "id": 2,
-              "day": 1,
-              "timeSlot": "21:00 - 09:00",
-              "type": "place",
-              "category": "숙소",
-              "name": "차박지 또는 펜션명",
-              "lat": 위도숫자,
-              "lng": 경도숫자,
-              "details": "숙박 관련 안내 및 특징",
-              "cost": 1인당숙박비숫자
             }
           ]
         }
@@ -486,6 +438,7 @@
 
         document.getElementById('recommendationSection').classList.remove('hidden');
         renderPlaceList();
+        renderAccommodationCards();
         updateMapMarkers(generatedPlaces);
         saveToLocalStorage();
 
@@ -517,6 +470,7 @@
       }
     }
 
+    // 추천 장소 리스트 렌더링 (카테고리가 시간 표시보다 앞으로 오도록 수정)
     function renderPlaceList() {
       const container = document.getElementById('placeListContainer');
       container.innerHTML = '';
@@ -551,11 +505,12 @@
               <input type="checkbox" class="mt-0.5 w-4 h-4 cursor-pointer shrink-0" ${place.checked ? 'checked' : ''} onchange="toggleCheck(${place.id})">
               
               <div class="flex-1 space-y-1.5 min-w-0">
+                <!-- 카테고리를 시간 바로 앞에 배치 -->
                 <div class="flex items-center gap-1.5 flex-wrap">
+                  ${categoryTagHTML}
                   <span class="inline-block font-bold px-2 py-0.5 rounded text-xs no-break bg-slate-100 text-slate-800 border border-slate-200">
                     ${place.timeSlot || '시간 미정'}
                   </span>
-                  ${categoryTagHTML}
                 </div>
 
                 <div class="flex justify-between items-start gap-2">
@@ -577,6 +532,38 @@
       });
     }
 
+    // AI가 선택한 숙소 실질 장단점 카드 렌더링
+    function renderAccommodationCards() {
+      const section = document.getElementById('selectedAccommodationsSection');
+      const container = document.getElementById('accommodationCardsContainer');
+      container.innerHTML = '';
+
+      const accList = generatedPlaces.filter(p => {
+        const cat = (p.category || '').toLowerCase();
+        return cat.includes('숙소') || cat.includes('숙박') || cat.includes('차박') || cat.includes('펜션') || cat.includes('호텔');
+      });
+
+      if (accList.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      accList.forEach(acc => {
+        const card = document.createElement('div');
+        card.className = "p-3 bg-purple-50/90 border border-purple-200 rounded-xl space-y-1.5";
+        card.innerHTML = `
+          <div class="flex justify-between items-center font-bold text-purple-900 text-xs border-b border-purple-200 pb-1">
+            <span>🏠 DAY ${acc.day} 숙소: ${acc.name}</span>
+            <span class="text-[10px] bg-purple-200 px-2 py-0.5 rounded text-purple-800">예상 ₩${(acc.cost||0).toLocaleString()}원</span>
+          </div>
+          <p class="text-slate-700 text-[11px] leading-tight text-keep"><b>[선택 이유 및 장점]</b> ${acc.pros || acc.details || '위치가 좋고 이동 동선에 최적화되어 있습니다.'}</p>
+          <p class="text-slate-600 text-[11px] leading-tight text-keep"><b>[단점 및 주의사항]</b> ${acc.cons || '사전 예약 상황이나 현장 주차 가능 여부를 체크해 주세요.'}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
     function toggleCheck(id) {
       const item = generatedPlaces.find(p => p.id === id);
       if(item) item.checked = !item.checked;
@@ -593,6 +580,7 @@
     function deleteChecked() {
       generatedPlaces = generatedPlaces.filter(p => !p.checked);
       renderPlaceList();
+      renderAccommodationCards();
       updateMapMarkers(generatedPlaces);
       saveToLocalStorage();
     }
@@ -626,11 +614,12 @@
 
           return `
             <div class="py-2.5 border-b last:border-b-0 space-y-1.5 text-xs">
+              <!-- 카테고리를 시간 바로 앞에 배치 -->
               <div class="flex items-center gap-1.5 flex-wrap">
+                ${categoryTagHTML}
                 <span class="inline-block font-bold bg-slate-100 text-slate-800 border border-slate-200 px-2 py-0.5 rounded text-xs no-break">
                   ${item.timeSlot || '시간 미정'}
                 </span>
-                ${categoryTagHTML}
               </div>
               
               <div class="flex justify-between items-start gap-2">
@@ -690,18 +679,19 @@
       });
     }
 
+    // 1줄로 세로 정렬되도록 리스트 구현
     function renderPackingList() {
       const container = document.getElementById('packingListContainer');
       container.innerHTML = '';
       packingItems.forEach((item, idx) => {
         const div = document.createElement('div');
-        div.className = "flex items-center justify-between p-2 rounded border bg-white shadow-sm";
+        div.className = "flex items-center justify-between p-2.5 rounded-lg border bg-white shadow-sm hover:border-teal-300 transition";
         div.innerHTML = `
-          <label class="flex items-center gap-1.5 cursor-pointer text-slate-700 text-xs text-keep flex-1">
-            <input type="checkbox" class="w-3.5 h-3.5 cursor-pointer shrink-0 accent-teal-600">
-            <span>${item}</span>
+          <label class="flex items-center gap-2 cursor-pointer text-slate-700 text-xs text-keep flex-1">
+            <input type="checkbox" class="w-4 h-4 cursor-pointer shrink-0 accent-teal-600">
+            <span class="font-medium">${item}</span>
           </label>
-          <button onclick="removePackingItem(${idx})" class="text-slate-400 hover:text-rose-500 font-bold ml-1 text-xs px-1">×</button>
+          <button onclick="removePackingItem(${idx})" class="text-slate-400 hover:text-rose-500 font-bold ml-2 text-sm px-1.5">×</button>
         `;
         container.appendChild(div);
       });
@@ -766,6 +756,7 @@
           generatedPlaces = data.generatedPlaces;
           document.getElementById('recommendationSection').classList.remove('hidden');
           renderPlaceList();
+          renderAccommodationCards();
           updateMapMarkers(generatedPlaces);
         }
         if(data.packingItems) { packingItems = data.packingItems; renderPackingList(); }
