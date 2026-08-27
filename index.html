@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI 여정 - 스마트 여행 플래너</title>
+  <title>AI 여정 플래너</title>
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="AI 여정">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/201/201623.png">
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/201/201623.png">
 
@@ -23,14 +22,15 @@
 
   <style>
     body {
-      background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.8)), 
-                  url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2000&auto=format&fit=crop');
+      /* 예쁜 산과 바다 풍경 배경 */
+      background: linear-gradient(rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.75)), 
+                  url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000&auto=format&fit=crop');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
     }
     .glass-card {
-      background: rgba(255, 255, 255, 0.94);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
@@ -52,18 +52,20 @@
       align-items: center;
       justify-content: center;
     }
+
+    /* 한 줄 유지 및 세로 글자 깨짐 방지 클래스 */
+    .single-line-time {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      display: inline-block !important;
+    }
+    .keep-text-layout {
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
   </style>
 </head>
-<body class="text-slate-800 min-h-screen pb-16">
-
-  <!-- 헤더 -->
-  <header class="py-6 px-4 text-center text-white shadow-md mb-4">
-    <div class="max-w-4xl mx-auto flex justify-center items-center gap-3">
-      <img src="https://cdn-icons-png.flaticon.com/512/201/201623.png" class="w-10 h-10 drop-shadow-md" alt="앱 아이콘">
-      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight drop-shadow-md">AI 스마트 여정 플래너</h1>
-    </div>
-    <p class="text-emerald-200 text-xs md:text-sm mt-1 drop-shadow">시간대별 코스 & 실시간 지능형 예산 최적화</p>
-  </header>
+<body class="text-slate-800 min-h-screen pt-6 pb-16">
 
   <main class="max-w-4xl mx-auto px-4 space-y-6">
 
@@ -73,22 +75,22 @@
         <i class="fa-solid fa-compass text-teal-600"></i>1. 여행 기본 정보 입력
       </h2>
       
-      <!-- 출발지 & 도착지 -->
+      <!-- 출발지 & 도착지 (괄호 문구 제거) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700">출발지 (어디서 출발하나요?)</label>
+          <label class="block text-xs font-semibold mb-1 text-slate-700">출발지</label>
           <input type="text" id="startLocation" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 서울역, 인천공항 등">
         </div>
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700">도착지 (여행 종료 후 복귀 위치 / 보통 출발지와 동일)</label>
-          <input type="text" id="destinationMain" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 서울역, 집 등 (출발지와 동일 시 동일하게 입력)">
+          <label class="block text-xs font-semibold mb-1 text-slate-700">도착지</label>
+          <input type="text" id="destinationMain" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 부산, 제주도, 도쿄 등">
         </div>
       </div>
 
       <!-- 예산 & 날짜 -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700">총 예산 (예: 50만원, 1000000원 등 입력 가능)</label>
+          <label class="block text-xs font-semibold mb-1 text-slate-700">총 예산</label>
           <input type="text" id="totalBudgetInput" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 50만원 또는 500000">
         </div>
         <div>
@@ -101,14 +103,13 @@
         </div>
       </div>
 
-      <!-- 인원수 위아래 휠 드래그 선택기 (1명~30명) -->
+      <!-- 인원수 위아래 휠 피커 (최대 30명) -->
       <div>
-        <label class="block text-xs font-semibold mb-1 text-slate-700">여행 인원 수 (위아래로 드래그/스크롤하여 선택, 최대 30명)</label>
+        <label class="block text-xs font-semibold mb-1 text-slate-700">여행 인원 수 (위아래 드래그 선택)</label>
         <div class="relative bg-slate-100 rounded-xl border border-slate-300 overflow-hidden">
           <div class="absolute inset-x-0 top-[33.33px] h-[33.33px] bg-teal-500/20 border-y border-teal-500 pointer-events-none"></div>
           <div class="wheel-picker-container" id="wheelPicker" onscroll="onWheelScroll()">
             <div class="wheel-item"></div>
-            <!-- 1명 ~ 30명 생성 -->
             <script>
               for(let i=1; i<=30; i++) {
                 document.write(`<div class="wheel-item font-bold text-sm" data-val="${i}">${i} 명</div>`);
@@ -119,12 +120,12 @@
         </div>
       </div>
 
-      <!-- 세부 여행지 추가 (엔터 키 완벽 지원) -->
+      <!-- 세부 여행지 추가 -->
       <div>
-        <label class="block text-xs font-semibold mb-1 text-slate-700">세부 방문하고 싶은 곳 / 지역 (장소 적고 Enter 누르면 추가)</label>
+        <label class="block text-xs font-semibold mb-1 text-slate-700">세부 방문 장소 / 지역 (Enter 입력 시 추가)</label>
         <div class="flex gap-2">
-          <input type="text" id="destinationInput" class="flex-1 border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 해운대, 광안리, 도쿄타워 (입력 후 Enter)" onkeydown="handleDestKeyDown(event)">
-          <button type="button" onclick="addDestination()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2.5 rounded-lg font-bold transition">추가</button>
+          <input type="text" id="destinationInput" class="flex-1 border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="예: 해운대, 광안리, 장산역 (입력 후 Enter)" onkeydown="handleDestKeyDown(event)">
+          <button type="button" onclick="addDestination()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-4 py-2.5 rounded-lg font-bold transition whitespace-nowrap">추가</button>
         </div>
         <div id="destinationTags" class="flex flex-wrap gap-2 mt-2"></div>
       </div>
@@ -152,9 +153,6 @@
       <p class="text-sm font-bold text-slate-800">Gemini AI가 시간대별 동선과 예산을 분석해 최적의 코스를 만드는 중입니다...</p>
     </div>
 
-    <!-- 예산 경고 박스 -->
-    <div id="budgetWarningBox" class="hidden glass-card p-5 rounded-2xl border-2 border-amber-400 bg-amber-50/95 text-xs text-amber-900 space-y-2"></div>
-
     <!-- 지도 섹션 -->
     <section class="glass-card p-6 rounded-2xl shadow-xl border border-white/40">
       <h2 class="text-lg font-bold mb-3 text-slate-900 border-b pb-2 flex items-center gap-2">
@@ -163,7 +161,7 @@
       <div id="map"></div>
     </section>
 
-    <!-- AI 추천 장소 리스트 -->
+    <!-- AI 추천 장소 리스트 (DAY 구분 및 시간 한 줄 처리) -->
     <section id="recommendationSection" class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 hidden">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 pb-2 border-b gap-3">
         <h2 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-list-check mr-2 text-teal-600"></i>3. AI 추천 장소 리스트</h2>
@@ -175,10 +173,10 @@
         </div>
       </div>
 
-      <div id="placeListContainer" class="space-y-3"></div>
+      <div id="placeListContainer" class="space-y-4"></div>
     </section>
 
-    <!-- 날짜별 확정 일정표 -->
+    <!-- 날짜별 확정 일정표 (세로 글자 깨짐 방지 적용) -->
     <section id="finalScheduleSection" class="glass-card p-6 rounded-2xl shadow-xl border border-white/40 hidden">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-3 gap-3">
         <div>
@@ -202,7 +200,7 @@
       <h2 class="text-md font-bold mb-3 text-slate-900 border-b pb-2"><i class="fa-solid fa-boxes-packing mr-2 text-teal-600"></i>5. 여행 필수 준비물 체크리스트</h2>
       <div class="flex gap-2 mb-4">
         <input type="text" id="newPackingItem" class="flex-1 border rounded p-2 text-xs focus:ring-2 focus:ring-teal-500 outline-none bg-white" placeholder="추가할 준비물 입력">
-        <button onclick="addCustomPackingItem()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded">추가</button>
+        <button onclick="addCustomPackingItem()" class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded whitespace-nowrap">추가</button>
       </div>
       <div id="packingListContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs"></div>
     </section>
@@ -210,7 +208,6 @@
   </main>
 
   <script>
-    // 개인 API 키 탑재
     const FIXED_API_KEY = "AQ.Ab8RN6K3nkgnYje2mSpkemDglSMq3jMwdZ2-dEN1HGPxS_Dtng";
 
     let map;
@@ -221,24 +218,21 @@
     let selectedTravelers = 2;
     let packingItems = ["여권/신분증", "보조배터리/충전기", "비상약", "세면도구", "편한 신발"];
 
-    // 앱 초기화 및 로컬스토리지 불러오기
     function initApp() {
       map = L.map('map').setView([36.5, 127.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
       }).addTo(map);
 
-      // 휠 초기화 (기본 2명)
       setTimeout(() => {
         const picker = document.getElementById('wheelPicker');
-        picker.scrollTop = 33.33; 
+        if(picker) picker.scrollTop = 33.33; 
       }, 100);
 
       loadFromLocalStorage();
     }
     window.onload = initApp;
 
-    // 위아래 휠 스크롤 이벤트 (최대 30명 연동)
     function onWheelScroll() {
       const picker = document.getElementById('wheelPicker');
       const idx = Math.round(picker.scrollTop / 33.33);
@@ -248,11 +242,9 @@
       }
     }
 
-    // 예산 금액 텍스트 변환 함수
     function parseKRWBudget(text) {
       if (!text) return 0;
       let clean = text.toString().replace(/,/g, '').trim();
-      
       let total = 0;
       const ukMatch = clean.match(/(\d+)\s*억/);
       const manMatch = clean.match(/(\d+)\s*만/);
@@ -267,7 +259,6 @@
       return total;
     }
 
-    // 여행지 엔터 입력 처리
     function handleDestKeyDown(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -302,7 +293,6 @@
       `).join('');
     }
 
-    // 스타일 태그 선택
     document.querySelectorAll('.style-tag').forEach(tag => {
       tag.addEventListener('click', function() {
         const style = this.dataset.style;
@@ -319,13 +309,12 @@
       });
     });
 
-    // AI 코스 짜기 통신
     async function fetchAIItinerary() {
       const startLoc = document.getElementById('startLocation').value.trim();
       const mainDest = document.getElementById('destinationMain').value.trim();
 
       if (!startLoc || !mainDest) {
-        alert("출발지와 복귀 목적지를 모두 입력해 주세요.");
+        alert("출발지와 도착지를 입력해 주세요.");
         return;
       }
 
@@ -335,19 +324,18 @@
       const endDate = document.getElementById('endDate').value;
 
       document.getElementById('loading').classList.remove('hidden');
-      document.getElementById('budgetWarningBox').classList.add('hidden');
 
       const prompt = `
         출발지: ${startLoc}
-        여행 종료 복귀 위치: ${mainDest}
-        방문 희망 지역들: ${destinationList.join(', ')}
+        도착지: ${mainDest}
+        방문 희망 장소/지역: ${destinationList.join(', ')}
         일정: ${startDate} ~ ${endDate}
-        인원: ${selectedTravelers}명 (최대 30명 지원)
+        인원: ${selectedTravelers}명
         총 예산 입력값: "${rawBudget}" (해석된 금액: ${numericBudget}원)
         선호 스타일: ${selectedStyles.join(', ')}
 
         [지침]
-        1. 입력된 예산 범위 안에서 시간대별(오전, 점심, 오후, 저녁) 코스를 구체적으로 구성해줘.
+        1. DAY별 / 시간대별(예: 09:00 - 11:00) 코스로 짜줘.
         2. 오타가 있더라도 문맥을 통해 알아서 올바른 지명이나 단어로 해석해줘.
         3. 예산에 최적화된 가성비 동선으로 추천해줘.
         4. 반드시 아래 JSON 형식으로만 응답해줘.
@@ -360,13 +348,13 @@
               "id": 1,
               "day": 1,
               "timeSlot": "09:00 - 11:00",
-              "type": "attraction 또는 restaurant 또는 accommodation",
-              "category": "명소 또는 식당 또는 숙소",
-              "name": "실제 존재하는 장소명",
+              "type": "attraction",
+              "category": "명소",
+              "name": "장소명",
               "lat": 위도숫자,
               "lng": 경도숫자,
-              "details": "주요 활동 또는 대표 메뉴",
-              "cost": 1인당예상비용숫자
+              "details": "주요 활동 및 추천 이유",
+              "cost": 1인당비용숫자
             }
           ]
         }
@@ -405,7 +393,6 @@
       }
     }
 
-    // 지도 마커 및 줌 영역 조정
     function updateMapMarkers(places) {
       markers.forEach(m => map.removeLayer(m));
       markers = [];
@@ -425,33 +412,53 @@
       }
     }
 
+    // 추천 장소 리스트 (DAY 구분 추가 및 시간 한 줄 + 아랫줄 장소명 구조)
     function renderPlaceList() {
       const container = document.getElementById('placeListContainer');
       container.innerHTML = '';
 
-      generatedPlaces.forEach((place) => {
-        const card = document.createElement('div');
-        card.className = "p-3.5 rounded-xl border border-slate-200 bg-white shadow-sm flex items-start gap-3 text-xs";
+      const grouped = {};
+      generatedPlaces.forEach(p => {
+        const day = p.day || 1;
+        if(!grouped[day]) grouped[day] = [];
+        grouped[day].push(p);
+      });
 
-        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`;
+      Object.keys(grouped).forEach(day => {
+        const dayWrapper = document.createElement('div');
+        dayWrapper.className = "bg-slate-50/80 p-4 rounded-xl border border-slate-200 space-y-3";
 
-        card.innerHTML = `
-          <input type="checkbox" class="mt-1 w-4 h-4 cursor-pointer" ${place.checked ? 'checked' : ''} onchange="toggleCheck(${place.id})">
-          <div class="flex-1">
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2">
-                <span class="font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800">${place.timeSlot || '시간'}</span>
-                <strong class="text-sm text-slate-800">${place.name}</strong>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-slate-500">₩${(place.cost||0).toLocaleString()}원</span>
-                <a href="${mapUrl}" target="_blank" class="text-teal-600 hover:underline font-bold whitespace-nowrap"><i class="fa-solid fa-map-pin"></i> 지도</a>
+        let dayHTML = `<div class="font-bold text-teal-800 text-sm pb-1 border-b border-teal-200"><i class="fa-regular fa-calendar mr-1"></i> DAY ${day}</div>`;
+
+        grouped[day].forEach(place => {
+          const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`;
+
+          dayHTML += `
+            <div class="p-3.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-start gap-3 text-xs">
+              <input type="checkbox" class="mt-1 w-4 h-4 cursor-pointer" ${place.checked ? 'checked' : ''} onchange="toggleCheck(${place.id})">
+              <div class="flex-1 min-w-0">
+                <!-- 시간 한 줄 표시 -->
+                <div class="mb-1">
+                  <span class="single-line-time font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800 text-xs">
+                    ${place.timeSlot || '시간'}
+                  </span>
+                </div>
+                <!-- 시간 밑 장소명 및 금액/지도 -->
+                <div class="flex justify-between items-center gap-2">
+                  <strong class="text-sm text-slate-800 keep-text-layout">${place.name}</strong>
+                  <div class="flex items-center gap-2 text-xs shrink-0">
+                    <span class="text-slate-500 whitespace-nowrap">₩${(place.cost||0).toLocaleString()}원</span>
+                    <a href="${mapUrl}" target="_blank" class="text-teal-600 hover:underline font-bold whitespace-nowrap"><i class="fa-solid fa-map-pin"></i> 지도</a>
+                  </div>
+                </div>
+                <p class="text-slate-600 mt-1.5 keep-text-layout">${place.details || ''}</p>
               </div>
             </div>
-            <p class="text-slate-600 mt-1">${place.details || ''}</p>
-          </div>
-        `;
-        container.appendChild(card);
+          `;
+        });
+
+        dayWrapper.innerHTML = dayHTML;
+        container.appendChild(dayWrapper);
       });
     }
 
@@ -475,6 +482,7 @@
       saveToLocalStorage();
     }
 
+    // 최종 일정표 (세로 글자 깨짐 방지 레이아웃)
     function confirmPlaces() {
       const finalSection = document.getElementById('finalScheduleSection');
       const container = document.getElementById('dayByDaySchedule');
@@ -495,7 +503,7 @@
 
       Object.keys(grouped).forEach(day => {
         const dayBox = document.createElement('div');
-        dayBox.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2";
+        dayBox.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3";
 
         let dayCost = 0;
         let itemsHTML = grouped[day].map(item => {
@@ -503,15 +511,18 @@
           const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`;
 
           return `
-            <div class="py-2 border-b last:border-b-0 flex justify-between items-center text-xs">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded">${item.timeSlot || '시간'}</span>
-                <strong class="text-slate-800">${item.name}</strong>
+            <div class="py-2.5 border-b last:border-b-0 space-y-1 text-xs">
+              <div class="flex items-center justify-between gap-2">
+                <span class="single-line-time font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-100">
+                  ${item.timeSlot || '시간'}
+                </span>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-slate-500 whitespace-nowrap">₩${(item.cost||0).toLocaleString()}원</span>
+                  <a href="${mapUrl}" target="_blank" class="text-teal-600 hover:underline font-semibold whitespace-nowrap">지도보기</a>
+                </div>
               </div>
-              <div class="flex items-center gap-3">
-                <span class="text-slate-500">₩${(item.cost||0).toLocaleString()}원</span>
-                <a href="${mapUrl}" target="_blank" class="text-teal-600 hover:underline font-semibold whitespace-nowrap">지도보기</a>
-              </div>
+              <div class="font-bold text-slate-800 text-sm keep-text-layout">${item.name}</div>
+              ${item.details ? `<p class="text-slate-600 text-xs keep-text-layout mt-0.5">${item.details}</p>` : ''}
             </div>
           `;
         }).join('');
@@ -523,7 +534,7 @@
             <h3 class="font-bold text-teal-800 text-sm"><i class="fa-regular fa-calendar-check mr-1"></i> DAY ${day}</h3>
             <span class="text-xs font-bold text-slate-600">예상 1인 비용: ₩${dayCost.toLocaleString()}원</span>
           </div>
-          <div>${itemsHTML}</div>
+          <div class="divide-y divide-slate-100">${itemsHTML}</div>
         `;
         container.appendChild(dayBox);
       });
@@ -555,7 +566,7 @@
       packingItems.forEach(item => {
         const div = document.createElement('div');
         div.className = "flex items-center gap-2 p-2 rounded border bg-white shadow-sm";
-        div.innerHTML = `<input type="checkbox" class="w-4 h-4 cursor-pointer"><span class="text-slate-700">${item}</span>`;
+        div.innerHTML = `<input type="checkbox" class="w-4 h-4 cursor-pointer"><span class="text-slate-700 keep-text-layout">${item}</span>`;
         container.appendChild(div);
       });
     }
@@ -571,7 +582,6 @@
       }
     }
 
-    // 로컬스토리지 저장 및 불러오기
     function saveToLocalStorage() {
       const data = {
         startLocation: document.getElementById('startLocation').value,
